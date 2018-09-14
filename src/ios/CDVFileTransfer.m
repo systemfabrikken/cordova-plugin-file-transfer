@@ -724,6 +724,15 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
 
         self.responseCode = (int)[httpResponse statusCode];
         self.bytesExpected = [response expectedContentLength];
+        
+        //START FIX KAI
+        //when response is gziped expectedContentLength returns NSURLResponseUnknownLength,
+        //to circumvent we support sending content length by means of a X-Content-Length header
+        //se http://stackoverflow.com/questions/7417610/why-response-expectedcontentlength-always-return-1 for more on the expectedContentLength problem
+        if (self.bytesExpected == NSURLResponseUnknownLength && self.responseHeaders[@"X-Content-Length"])
+            self.bytesExpected =  ((NSString *) responseHeaders[@"X-Content-Length"]).longLongValue;
+        //SLUTT FIX KAI
+                
         self.responseHeaders = [httpResponse allHeaderFields];
         if ((self.direction == CDV_TRANSFER_DOWNLOAD) && (self.responseCode == 200) && (self.bytesExpected == NSURLResponseUnknownLength)) {
             // Kick off HEAD request to server to get real length
